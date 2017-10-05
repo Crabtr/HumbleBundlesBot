@@ -49,7 +49,7 @@ def page_handler(logger, sql, cur, reddit, soup):
         logger.info("Found new bundle: {} -- {}".format(title, link))
 
         try:
-            reddit.subreddit("narwhal_testing").submit(title, url=link)
+            reddit.subreddit("humblebundles").submit(title, url=link)
             timestamp = int(time.time())
             cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
             sql.commit()
