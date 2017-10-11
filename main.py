@@ -42,6 +42,7 @@ def main():
     while True:
         try:
             humblebundle.fetch_bundles(logger, sql, cur, reddit)
+            humblebundle.fetch_monthly(logger, sql, cur, reddit)
         except Exception as e:
             logger.error(e)
 
