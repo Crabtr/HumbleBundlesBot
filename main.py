@@ -31,7 +31,7 @@ def main():
     cur = sql.cursor()
 
     cur.execute("create table if not exists Bundles(Name TEXT NOT NULL, \
-                Link TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
+                URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
     sql.commit()
 
     # Authenticate with Reddit API
@@ -44,7 +44,6 @@ def main():
             humblebundle.fetch_bundles(logger, sql, cur, reddit)
         except Exception as e:
             logger.error(e)
-            # pass
 
         time.sleep(30)
 

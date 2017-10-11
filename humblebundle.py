@@ -41,17 +41,17 @@ def fetch_bundles(logger, sql, cur, reddit):
 
 
 def page_handler(logger, sql, cur, reddit, soup):
-    link = soup.find("link", {"rel": "canonical"})["href"]
+    url = soup.find("link", {"rel": "canonical"})["href"]
     title = soup.find("meta", {"name": "title"})["content"]
 
-    cur.execute("select * from Bundles where Link=?", [link])
+    cur.execute("select * from Bundles where URL=?", [url])
     if not cur.fetchone():
-        logger.info("Found new bundle: {} -- {}".format(title, link))
+        logger.info("Found new bundle: {} -- {}".format(title, url))
 
         try:
-            reddit.subreddit("humblebundles").submit(title, url=link)
+            reddit.subreddit("humblebundles").submit(title, url=url)
             timestamp = int(time.time())
-            cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
+            cur.execute("insert into Bundles values(?,?,?)", [title, url, timestamp])
             sql.commit()
         except Exception as e:
             logger.error(e)
