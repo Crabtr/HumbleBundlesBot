@@ -34,10 +34,8 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
                     logger.error(e)
 
 
-
-def fetch_monthly(logger, sql, cur, reddit):
-    headers = {"User-Agent": "reddit.com/u/humblebundlesbot"}
-
+def fetch_monthly(logger, sql, cur, browser, reddit):
+    # Build the URL for this month's bundle
     date = datetime.now()
     month = date.strftime("%B")
     month_lower = month.lower()
@@ -47,13 +45,17 @@ def fetch_monthly(logger, sql, cur, reddit):
 
     cur.execute("select * from Monthly where URL=?", [url])
     if not cur.fetchone():
-        req = requests.get(url, headers=headers, stream=True)
-        soup = BeautifulSoup(req.text, "html.parser")
+        # Fetch the url
+        # TODO: Handle potential errors
+        browser.get(url)
+        soup = BeautifulSoup(browser.page_source, "html.parser")
 
         if soup.title.string != "Page not found":
             title = "{} {} Humble Monthly Bundle".format(month, year)
-            # title = soup.find("meta", {"name": "title"})["content"]
 
+            logger.info("Found new monthly bundle: {} -- {}".format(title, url))
+
+            # TODO: This should try again if the API fails, not refetch the page
             try:
                 reddit.subreddit("humblebundles").submit(title, url=url)
                 timestamp = int(time.time())
