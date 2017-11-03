@@ -1,3 +1,4 @@
+from selenium import webdriver
 import authenticate
 import humblebundle
 import logging
@@ -32,16 +33,27 @@ def main():
 
     cur.execute("create table if not exists Bundles(Name TEXT NOT NULL, \
                 URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
+    cur.execute("create table if not exists Monthly(Name TEXT NOT NULL, \
+                URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
     sql.commit()
+
+    # Create a headless Chrome process
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless")
+    options.add_argument("--window-size=1920x1080")
+    options.add_argument("--disable-gpu")
+    browser = webdriver.Chrome(chrome_options=options)
+    browser.implicitly_wait(60)
 
     # Authenticate with Reddit API
     reddit = authenticate.auth()
     logger.info("Successfully authenticated as {}".format(reddit.user.me()))
 
     # Work loop
+    # TODO: Close browser should we need to close prematurely
     while True:
         try:
-            humblebundle.fetch_bundles(logger, sql, cur, reddit)
+            humblebundle.fetch_bundles(logger, sql, cur, browser, reddit)
             humblebundle.fetch_monthly(logger, sql, cur, reddit)
         except Exception as e:
             logger.error(e)

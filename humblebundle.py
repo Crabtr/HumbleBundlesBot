@@ -1,60 +1,38 @@
 from bs4 import BeautifulSoup
-import requests
 import time
 
 
-def fetch_bundles(logger, sql, cur, reddit):
-    headers = {"User-Agent": "reddit.com/u/humblebundlesbot"}
+def fetch_bundles(logger, sql, cur, browser, reddit):
+    # Fetch HumbleBundle's main page
+    # TODO: Handle potential errors
+    browser.get("https://humblebundle.com")
 
-    urls = [
-        "https://www.humblebundle.com",
-        "https://www.humblebundle.com/mobile",
-        "https://www.humblebundle.com/software",
-        "https://www.humblebundle.com/books"
-    ]
+    # Parse the rendered DOM
+    soup = BeautifulSoup(browser.page_source, "html.parser")
+    bundles = soup.find_all("div", {"class": ["bundle","navbar-tile"]})
 
-    for url in urls:
-        req = requests.get(url, headers=headers, allow_redirects=True, stream=True)
-        soup = BeautifulSoup(req.text, "html.parser")
+    if len(bundles) > 0:
+        for bundle in bundles:
+            # Get the first link in the div
+            link_tag = bundle.find("a")
+            url = "https://www.humblebundle.com" + link_tag["href"]
 
-        page_handler(logger, sql, cur, reddit, soup)
+            cur.execute("select * from Bundles where URL=?", [browser.current_url])
+            if not cur.fetchone():
+                title = bundle.find("span", {"class": "name"})
 
-        time.sleep(5)
+                logger.info("Found new bundle: {} -- {}".format(title, url))
 
-        subtab_container = soup.find("div", {"id": "subtab-container"})
-        if subtab_container:
-            buttons = subtab_container.find_all("a", {"class": "subtab-button"})
+                # TODO: This should try again if the API fails, not refetch the page
+                try:
+                    reddit.subreddit("humblebundles").submit(title, url=url)
+                    timestamp = int(time.time())
+                    cur.execute("insert into Bundles values(?,?,?)", [title, url, timestamp])
+                    sql.commit()
+                    time.sleep(5)
+                except Exception as e:
+                    logger.error(e)
 
-            if buttons:
-                for button in buttons:
-                    if button["href"] != "#heading-logo":
-                        button_url = "https://humblebundle.com" + button["href"]
-
-                        req = requests.get(button_url, headers=headers, allow_redirects=True, stream=True)
-                        soup = BeautifulSoup(req.text, "html.parser")
-
-                        page_handler(logger, sql, cur, reddit, soup)
-
-                        time.sleep(5)
-
-        time.sleep(5)
-
-
-def page_handler(logger, sql, cur, reddit, soup):
-    url = soup.find("link", {"rel": "canonical"})["href"]
-    title = soup.find("meta", {"name": "title"})["content"]
-
-    cur.execute("select * from Bundles where URL=?", [url])
-    if not cur.fetchone():
-        logger.info("Found new bundle: {} -- {}".format(title, url))
-
-        try:
-            reddit.subreddit("humblebundles").submit(title, url=url)
-            timestamp = int(time.time())
-            cur.execute("insert into Bundles values(?,?,?)", [title, url, timestamp])
-            sql.commit()
-        except Exception as e:
-            logger.error(e)
 
 
 def fetch_monthly(logger, sql, cur, reddit):
