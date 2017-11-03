@@ -59,7 +59,7 @@ def fetch_monthly(logger, sql, cur, browser, reddit):
             try:
                 reddit.subreddit("humblebundles").submit(title, url=url)
                 timestamp = int(time.time())
-                cur.execute("insert into Bundles values(?,?,?)", [title, url, timestamp])
+                cur.execute("insert into Monthly values(?,?,?)", [title, url, timestamp])
                 sql.commit()
             except Exception as e:
                 logger.error(e)
