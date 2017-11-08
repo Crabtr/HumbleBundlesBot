@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+from datetime import datetime
 import time
 
 
@@ -9,29 +10,30 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
 
     # Parse the rendered DOM
     soup = BeautifulSoup(browser.page_source, "html.parser")
-    bundles = soup.find_all("div", {"class": ["bundle","navbar-tile"]})
+    dropdown = soup.find("div", {"class": "bundle-dropdown-content"})
+    bundles = dropdown.find_all("div", {"class": ["bundle","navbar-tile"]})
 
-    if len(bundles) > 0:
-        for bundle in bundles:
-            # Get the first link in the div
-            link_tag = bundle.find("a")
-            url = "https://www.humblebundle.com" + link_tag["href"]
+    for bundle in bundles:
+        # Get the first link in the div
+        link_tag = bundle.find("a")
+        link = "https://www.humblebundle.com" + link_tag["href"]
 
-            cur.execute("select * from Bundles where URL=?", [browser.current_url])
-            if not cur.fetchone():
-                title = bundle.find("span", {"class": "name"})
+        cur.execute("select * from Bundles where URL=?", [link])
+        if not cur.fetchone():
+            title = bundle.find("span", {"class": "name"})
+            title = title.text
 
-                logger.info("Found new bundle: {} -- {}".format(title, url))
+            logger.info("Found new bundle: {} -- {}".format(title, link))
 
-                # TODO: This should try again if the API fails, not refetch the page
-                try:
-                    reddit.subreddit("humblebundles").submit(title, url=url)
-                    timestamp = int(time.time())
-                    cur.execute("insert into Bundles values(?,?,?)", [title, url, timestamp])
-                    sql.commit()
-                    time.sleep(5)
-                except Exception as e:
-                    logger.error(e)
+            # TODO: This should try again if the API fails, not refetch the page
+            try:
+                reddit.subreddit("humblebundles").submit(title, url=link)
+                timestamp = int(time.time())
+                cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
+                sql.commit()
+                time.sleep(5)
+            except Exception as e:
+                logger.error(e)
 
 
 def fetch_monthly(logger, sql, cur, browser, reddit):

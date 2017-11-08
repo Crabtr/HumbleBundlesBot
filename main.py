@@ -54,7 +54,8 @@ def main():
     while True:
         try:
             humblebundle.fetch_bundles(logger, sql, cur, browser, reddit)
-            humblebundle.fetch_monthly(logger, sql, cur, reddit)
+            time.sleep(1)
+            humblebundle.fetch_monthly(logger, sql, cur, browser, reddit)
         except Exception as e:
             logger.error(e)
 
