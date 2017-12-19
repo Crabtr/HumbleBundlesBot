@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.common.exceptions import WebDriverException
 import authenticate
 import humblebundle
 import logging
@@ -56,6 +57,14 @@ def main():
             humblebundle.fetch_bundles(logger, sql, cur, browser, reddit)
             time.sleep(1)
             humblebundle.fetch_monthly(logger, sql, cur, browser, reddit)
+        except WebDriverException as e:
+            logger.error(e)
+
+            # Closes the current browser and creates a new one
+            # TODO: Does this cover all browser exceptions?
+            browser.quit()
+            browser = webdriver.Chrome(chrome_options=options)
+            browser.implicitly_wait(60)
         except Exception as e:
             logger.error(e)
 
