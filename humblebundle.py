@@ -1,6 +1,6 @@
-from bs4 import BeautifulSoup
 from datetime import datetime
 import time
+from bs4 import BeautifulSoup
 
 
 def fetch_bundles(logger, sql, cur, browser, reddit):
@@ -11,7 +11,7 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
     # Parse the rendered DOM
     soup = BeautifulSoup(browser.page_source, "html.parser")
     dropdown = soup.find("div", {"class": "bundle-dropdown-content"})
-    bundles = dropdown.find_all("div", {"class": ["bundle","navbar-tile"]})
+    bundles = dropdown.find_all("div", {"class": ["bundle", "navbar-tile"]})
 
     for bundle in bundles:
         # Get the first link in the div
@@ -32,8 +32,9 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
                 cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
                 sql.commit()
                 time.sleep(5)
-            except Exception as e:
-                logger.error(e)
+            # TODO: Degeneralize this exception
+            except Exception as err:
+                logger.error(err)
 
 
 def fetch_monthly(logger, sql, cur, browser, reddit):
@@ -63,5 +64,6 @@ def fetch_monthly(logger, sql, cur, browser, reddit):
                 timestamp = int(time.time())
                 cur.execute("insert into Monthly values(?,?,?)", [title, url, timestamp])
                 sql.commit()
-            except Exception as e:
-                logger.error(e)
+            # TODO: Degeneralize this exception
+            except Exception as err:
+                logger.error(err)

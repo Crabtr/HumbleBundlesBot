@@ -1,10 +1,10 @@
+import logging
+import sqlite3
+import time
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
 import authenticate
 import humblebundle
-import logging
-import sqlite3
-import time
 
 
 def main():
@@ -16,17 +16,17 @@ def main():
                                   "%Y/%m/%d %H:%M:%S")
 
     # File handler
-    fh = logging.FileHandler("humblebundlesbot.log")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(formatter)
+    file_handler = logging.FileHandler("humblebundlesbot.log")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(formatter)
 
     # Stream handler
-    ch = logging.StreamHandler()
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(formatter)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(formatter)
 
-    logger.addHandler(fh)
-    logger.addHandler(ch)
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
 
     # Open and create the database if needed
     sql = sqlite3.connect("data.db")
@@ -48,7 +48,7 @@ def main():
 
     # Authenticate with Reddit API
     reddit = authenticate.auth()
-    logger.info("Successfully authenticated as {}".format(reddit.user.me()))
+    logger.info("Successfully authenticated as %s", reddit.user.me())
 
     # Work loop
     # TODO: Close browser should we need to close prematurely
@@ -57,16 +57,17 @@ def main():
             humblebundle.fetch_bundles(logger, sql, cur, browser, reddit)
             time.sleep(1)
             humblebundle.fetch_monthly(logger, sql, cur, browser, reddit)
-        except WebDriverException as e:
-            logger.error(e)
+        except WebDriverException as err:
+            logger.error(err)
 
             # Closes the current browser and creates a new one
             # TODO: Does this cover all browser exceptions?
             browser.quit()
             browser = webdriver.Chrome(chrome_options=options)
             browser.implicitly_wait(60)
-        except Exception as e:
-            logger.error(e)
+        # TODO: Degeneralize this exception
+        except Exception as err:
+            logger.error(err)
 
         time.sleep(30)
 
