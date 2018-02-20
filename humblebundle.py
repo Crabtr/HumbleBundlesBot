@@ -16,7 +16,16 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
     for bundle in bundles:
         # Get the first link in the div
         link_tag = bundle.find("a")
-        link = "https://www.humblebundle.com" + link_tag["href"]
+        link_path = ""
+
+        # Remove query parameters from the URL
+        for char in link_tag["href"]:
+            if char != "?":
+                link_path += char
+            else:
+                break
+
+        link = "https://www.humblebundle.com" + link_path
 
         cur.execute("select * from Bundles where URL=?", [link])
         if not cur.fetchone():
