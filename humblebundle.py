@@ -10,40 +10,42 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
 
     # Parse the rendered DOM
     soup = BeautifulSoup(browser.page_source, "html.parser")
-    dropdown = soup.find("div", {"class": "bundle-dropdown-content"})
-    bundles = dropdown.find_all("div", {"class": ["bundle", "navbar-tile"]})
 
-    for bundle in bundles:
-        # Get the first link in the div
-        link_tag = bundle.find("a")
-        link_path = ""
+    if soup is not None:
+        dropdown = soup.find("div", {"class": "bundle-dropdown-content"})
+        bundles = dropdown.find_all("div", {"class": ["bundle", "navbar-tile"]})
 
-        # Remove query parameters from the URL
-        for char in link_tag["href"]:
-            if char != "?":
-                link_path += char
-            else:
-                break
+        for bundle in bundles:
+            # Get the first link in the div
+            link_tag = bundle.find("a")
+            link_path = ""
 
-        link = "https://www.humblebundle.com" + link_path
+            # Remove query parameters from the URL
+            for char in link_tag["href"]:
+                if char != "?":
+                    link_path += char
+                else:
+                    break
 
-        cur.execute("select * from Bundles where URL=?", [link])
-        if not cur.fetchone():
-            title = bundle.find("span", {"class": "name"})
-            title = title.text
+            link = "https://www.humblebundle.com" + link_path
 
-            logger.info("Found new bundle: {} -- {}".format(title, link))
+            cur.execute("select * from Bundles where URL=?", [link])
+            if not cur.fetchone():
+                title = bundle.find("span", {"class": "name"})
+                title = title.text
 
-            # TODO: This should try again if the API fails, not refetch the page
-            try:
-                reddit.subreddit("humblebundles").submit(title, url=link)
-                timestamp = int(time.time())
-                cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
-                sql.commit()
-                time.sleep(5)
-            # TODO: Degeneralize this exception
-            except Exception as err:
-                logger.error(err)
+                logger.info("Found new bundle: {} -- {}".format(title, link))
+
+                # TODO: This should try again if the API fails, not refetch the page
+                try:
+                    reddit.subreddit("humblebundles").submit(title, url=link)
+                    timestamp = int(time.time())
+                    cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
+                    sql.commit()
+                    time.sleep(5)
+                # TODO: Degeneralize this exception
+                except Exception as err:
+                    logger.error(err)
 
 
 def fetch_monthly(logger, sql, cur, browser, reddit):
