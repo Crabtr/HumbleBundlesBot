@@ -1,6 +1,7 @@
 from datetime import datetime
 import time
 from bs4 import BeautifulSoup
+from furl import furl
 
 
 def fetch_bundles(logger, sql, cur, browser, reddit):
@@ -13,34 +14,25 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
 
     if soup is not None:
         dropdown = soup.find("div", {"class": "bundle-dropdown-content"})
-        bundles = dropdown.find_all("div", {"class": ["bundle", "navbar-tile"]})
+        bundles = dropdown.select("a.bundle.navbar-tile")
 
         for bundle in bundles:
-            # Get the first link in the div
-            link_tag = bundle.find("a")
-            link_path = ""
-
             # Remove query parameters from the URL
-            for char in link_tag["href"]:
-                if char != "?":
-                    link_path += char
-                else:
-                    break
+            link = furl("https://www.humblebundle.com" + bundle["href"])
+            link.remove(link.args)
 
-            link = "https://www.humblebundle.com" + link_path
-
-            cur.execute("select * from Bundles where URL=?", [link])
+            cur.execute("select * from Bundles where URL=?", [link.url])
             if not cur.fetchone():
                 title = bundle.find("span", {"class": "name"})
                 title = title.text
 
-                logger.info("Found new bundle: {} -- {}".format(title, link))
+                logger.info("Found new bundle: {} -- {}".format(title, link.url))
 
                 # TODO: This should try again if the API fails, not refetch the page
                 try:
-                    reddit.subreddit("humblebundles").submit(title, url=link)
+                    reddit.subreddit("humblebundles").submit(title, url=link.url)
                     timestamp = int(time.time())
-                    cur.execute("insert into Bundles values(?,?,?)", [title, link, timestamp])
+                    cur.execute("insert into Bundles values(?,?,?)", [title, link.url, timestamp])
                     sql.commit()
                     time.sleep(5)
                 # TODO: Degeneralize this exception
