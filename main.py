@@ -1,9 +1,10 @@
+import json
 import logging
 import sqlite3
 import time
+import praw
 from selenium import webdriver
 from selenium.common.exceptions import WebDriverException
-import authenticate
 import humblebundle
 
 
@@ -38,16 +39,24 @@ def main():
                 URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
     sql.commit()
 
-    # Create a headless Chrome process
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless")
-    options.add_argument("--window-size=1920x1080")
-    options.add_argument("--disable-gpu")
-    browser = webdriver.Chrome(chrome_options=options)
-    browser.implicitly_wait(60)
+    # Create a headless Firefox process
+    options = webdriver.FirefoxOptions()
+    options.headless = True
 
-    # Authenticate with Reddit API
-    reddit = authenticate.auth()
+    browser = webdriver.Firefox(executable_path="./geckodriver", options=options)
+    browser.implicitly_wait(30)
+    browser.set_page_load_timeout(30)
+
+    # Create our connection to Reddit
+    with open("info.json", "r", encoding="UTF-8") as info_file:
+        info_json = json.load(info_file)
+
+    reddit = praw.Reddit(username="HumbleBundlesBot",
+                         password=info_json["password"],
+                         client_id=info_json["client_id"],
+                         client_secret=info_json["client_secret"],
+                         user_agent="HumbleBundlesBot")
+
     logger.info("Successfully authenticated as %s", reddit.user.me())
 
     # Work loop
