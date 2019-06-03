@@ -33,12 +33,12 @@ def main():
     sql = sqlite3.connect("data.db")
     cur = sql.cursor()
 
-    cur.execute("create table if not exists Bundles(Name TEXT NOT NULL, \
-                URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
-    cur.execute("create table if not exists Games(Name TEXT NOT NULL, \
-                URL TEXT NOT NULL, Date_Added TEXT NOT NULL)")
-    cur.execute("create table if not exists Monthly(Name TEXT NOT NULL, \
-                URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
+    cur.execute("create table if not exists bundles(name text not null, \
+                url text not null unique, date_added text not null)")
+    cur.execute("create table if not exists games(name text not null, \
+                url text not null, date_added text not null)")
+    cur.execute("create table if not exists monthly(name text not null, \
+                url text not null unique, date_added text not null)")
     sql.commit()
 
     # Create a headless Firefox process

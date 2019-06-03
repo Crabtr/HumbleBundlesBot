@@ -21,7 +21,7 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
             link = furl("https://www.humblebundle.com" + bundle["href"])
             link.remove(link.args)
 
-            cur.execute("select * from Bundles where URL=?", [link.url])
+            cur.execute("select * from bundles where url=?", [link.url])
             if not cur.fetchone():
                 title = bundle.find("span", {"class": "name"})
                 title = title.text
@@ -32,7 +32,7 @@ def fetch_bundles(logger, sql, cur, browser, reddit):
                 try:
                     reddit.subreddit("humblebundles").submit(title, url=link.url)
                     timestamp = int(time.time())
-                    cur.execute("insert into Bundles values(?,?,?)", [title, link.url, timestamp])
+                    cur.execute("insert into bundles values(?,?,?)", [title, link.url, timestamp])
                     sql.commit()
                     time.sleep(5)
                 # TODO: Degeneralize this exception
@@ -66,16 +66,16 @@ def fetch_free(logger, sql, cur, browser, reddit, ignored_games):
                     # TODO: Should this be pushed to a month?
                     timestamp = int(time.time())
 
-                    cur.execute("select * from Games where URL=? and (?-Date_Added) >= 1209600", [url.url, timestamp])
+                    cur.execute("select * from games where url=? and (?-date_added) >= 1209600", [url.url, timestamp])
                     if not cur.fetchone():
                         logger.info("Found new free game: {} -- {}".format(title, url.url))
 
-                        submission_title = "Free game: " + title
+                        submission_title = title + " is available for free!"
 
                         # TODO: This should try again on failure
                         try:
                             reddit.subreddit("humblebundles").submit(submission_title, url.url)
-                            cur.execute("insert into Games values(?,?,?)", [title, url.url, timestamp])
+                            cur.execute("insert into games values(?,?,?)", [title, url.url, timestamp])
                             sql.commit()
                             time.sleep(5)
                         # TODO: Degeneralize this exception
@@ -92,7 +92,7 @@ def fetch_monthly(logger, sql, cur, browser, reddit):
 
     url = "https://www.humblebundle.com/monthly/p/" + month_lower + "_" + year + "_monthly"
 
-    cur.execute("select * from Monthly where URL=?", [url])
+    cur.execute("select * from monthly where url=?", [url])
     if not cur.fetchone():
         # Fetch the url
         # TODO: Handle potential errors
@@ -108,7 +108,7 @@ def fetch_monthly(logger, sql, cur, browser, reddit):
             try:
                 reddit.subreddit("humblebundles").submit(title, url=url)
                 timestamp = int(time.time())
-                cur.execute("insert into Monthly values(?,?,?)", [title, url, timestamp])
+                cur.execute("insert into monthly values(?,?,?)", [title, url, timestamp])
                 sql.commit()
             # TODO: Degeneralize this exception
             except Exception as err:
