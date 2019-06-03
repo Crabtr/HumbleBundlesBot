@@ -35,6 +35,8 @@ def main():
 
     cur.execute("create table if not exists Bundles(Name TEXT NOT NULL, \
                 URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
+    cur.execute("create table if not exists Games(Name TEXT NOT NULL, \
+                URL TEXT NOT NULL, Date_Added TEXT NOT NULL)")
     cur.execute("create table if not exists Monthly(Name TEXT NOT NULL, \
                 URL TEXT NOT NULL UNIQUE, Date_Added TEXT NOT NULL)")
     sql.commit()
@@ -64,6 +66,8 @@ def main():
     while True:
         try:
             humblebundle.fetch_bundles(logger, sql, cur, browser, reddit)
+            time.sleep(1)
+            humblebundle.fetch_free(logger, sql, cur, browser, reddit, info_json["ignored_games"])
             time.sleep(1)
             humblebundle.fetch_monthly(logger, sql, cur, browser, reddit)
         except WebDriverException as err:

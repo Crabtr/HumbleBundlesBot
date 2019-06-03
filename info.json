@@ -1,5 +1,6 @@
 {
     "password": "",
     "client_id": "",
-    "client_secret": ""
+    "client_secret": "",
+    "ignored_games": []
 }
