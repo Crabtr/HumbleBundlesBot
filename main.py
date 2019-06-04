@@ -50,13 +50,13 @@ def main():
     browser.set_page_load_timeout(30)
 
     # Create our connection to Reddit
-    with open("info.json", "r", encoding="UTF-8") as info_file:
-        info_json = json.load(info_file)
+    with open("config.json", "r", encoding="UTF-8") as config_file:
+        config = json.load(config_file)
 
     reddit = praw.Reddit(username="HumbleBundlesBot",
-                         password=info_json["password"],
-                         client_id=info_json["client_id"],
-                         client_secret=info_json["client_secret"],
+                         password=config["password"],
+                         client_id=config["client_id"],
+                         client_secret=config["client_secret"],
                          user_agent="HumbleBundlesBot")
 
     logger.info("Successfully authenticated as %s", reddit.user.me())
@@ -67,7 +67,7 @@ def main():
         try:
             humblebundle.fetch_bundles(logger, sql, cur, browser, reddit)
             time.sleep(1)
-            humblebundle.fetch_free(logger, sql, cur, browser, reddit, info_json["ignored_games"])
+            humblebundle.fetch_free(logger, sql, cur, browser, reddit, config["ignored_games"])
             time.sleep(1)
             humblebundle.fetch_monthly(logger, sql, cur, browser, reddit)
         except WebDriverException as err:
