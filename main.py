@@ -76,8 +76,10 @@ def main():
             # Closes the current browser and creates a new one
             # TODO: Does this cover all browser exceptions?
             browser.quit()
-            browser = webdriver.Chrome(chrome_options=options)
-            browser.implicitly_wait(60)
+
+            browser = webdriver.Firefox(executable_path="./geckodriver", options=options)
+            browser.implicitly_wait(30)
+            browser.set_page_load_timeout(30)
         # TODO: Degeneralize this exception
         except Exception as err:
             logger.error(err)
